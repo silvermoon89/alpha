@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>币安alpha实时空投数据</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .controls {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .search-filter {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .filter-select {
+            padding: 10px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            background: white;
+            font-size: 14px;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .refresh-btn {
+            padding: 12px 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+
+        .refresh-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .airdrops-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .airdrop-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s, box-shadow 0.3s;
+            border-left: 4px solid #667eea;
+        }
+
+        .airdrop-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .token-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .token-symbol {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .token-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-announced {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .status-ongoing {
+            background: #e8f5e8;
+            color: #388e3c;
+        }
+
+        .status-completed {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .card-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .detail-label {
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 2px;
+        }
+
+        .detail-value {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        .type-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        /* 复制按钮样式 */
+        .copy-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            line-height: 1;
+            font-size: 12px;
+            font-weight: 600;
+            color: #fff;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.2s ease;
+        }
+        .copy-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+        }
+        .copy-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+        }
+        .copy-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+            box-shadow: none;
+        }
+
+        .type-claim {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .type-grab {
+            background: #e8f5e8;
+            color: #388e3c;
+        }
+
+        .type-tge {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .phase-badge {
+            background: #f5f5f5;
+            color: #666;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+        }
+
+        .loading {
+            text-align: center;
+            color: white;
+            font-size: 1.2rem;
+            margin: 50px 0;
+        }
+
+        .error {
+            background: rgba(255, 255, 255, 0.95);
+            color: #d32f2f;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        @media (max-width: 768px) {
+            html, body {
+                padding: 0;
+                margin: 0;
+                width: 100vw;
+                overflow-x: hidden;
+            }
+            .container {
+                max-width: 100vw;
+                padding: 0 16px;
+            }
+            .header {
+                margin-bottom: 22px;
+            }
+            .header h1 {
+                font-size: 1.2rem;
+                word-break: break-all;
+            }
+            .header p {
+                font-size: 0.95rem;
+            }
+            .controls {
+                padding: 16px 10px;
+                border-radius: 10px;
+                margin-bottom: 20px;
+            }
+            .search-filter {
+                gap: 12px;
+            }
+            .search-box input {
+                padding: 12px 12px;
+            }
+            .filter-group {
+                gap: 10px;
+            }
+            .filter-select {
+                font-size: 0.95rem;
+                padding: 8px 4px;
+                min-width: 0;
+                flex: 1;
+            }
+            .refresh-btn {
+                margin-top: 8px;
+            }
+            .update-info {
+                font-size: 0.85rem !important;
+                margin-top: 8px !important;
+            }
+            .stats {
+                gap: 8px;
+                margin-bottom: 16px;
+            }
+            .stat-card {
+                padding: 14px;
+                border-radius: 10px;
+            }
+            .stat-number {
+                font-size: 1.1rem;
+            }
+            .stat-label {
+                font-size: 0.8rem;
+            }
+            .airdrops-grid {
+                gap: 16px;
+            }
+            .airdrop-card {
+                padding: 16px;
+                border-radius: 10px;
+            }
+            .card-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 4px;
+            }
+            .token-symbol {
+                font-size: 0.85rem;
+                padding: 4px 8px;
+            }
+            .token-name {
+                font-size: 0.95rem;
+            }
+            .status-badge, .type-badge, .phase-badge {
+                font-size: 0.7rem;
+                padding: 2px 6px;
+            }
+            .card-details {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+            .detail-item {
+                display: flex;
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 0;
+                border-bottom: none;
+            }
+            .detail-label {
+                font-size: 0.8rem;
+                color: #666;
+                min-width: 0;
+                flex: none;
+            }
+            .detail-value {
+                font-size: 0.95rem;
+                color: #333;
+                text-align: left;
+                flex: none;
+            }
+            .card-footer {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 4px;
+                padding-top: 10px;
+            }
+            .loading, .error {
+                padding: 14px;
+            }
+            .copy-btn {
+                padding: 6px 12px;
+                font-size: 13px;
+            }
+        }
+        @media (max-width: 430px) {
+            .container {
+                padding: 0 8px;
+            }
+            .controls {
+                padding: 10px 4px;
+            }
+            .airdrops-grid {
+                gap: 16px;
+            }
+            .airdrop-card {
+                padding: 16px;
+            }
+        }
+
+        /* 通知动画 */
+        /* @keyframes slideIn {...} @keyframes slideOut {...} */
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>币安alpha实时空投数据</h1>
+            <p>实时监控和展示最新的空投信息</p>
+        </div>
+
+        <div class="controls">
+            <div class="search-filter">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="搜索代币名称/符号/合约地址...">
+                </div>
+                <div class="filter-group">
+                    <select id="statusFilter" class="filter-select">
+                        <option value="">所有状态</option>
+                        <option value="announced">待发布</option>
+                        <option value="ongoing">进行中</option>
+                        <option value="completed">已结束</option>
+                    </select>
+                    <select id="typeFilter" class="filter-select">
+                        <option value="">所有类型</option>
+                        <option value="claim">申领</option>
+                        <option value="grab">抢购</option>
+                        <option value="tge">代币生成事件</option>
+                    </select>
+                    <button class="refresh-btn" onclick="fetchData()">🔄 刷新数据</button>
+                </div>
+            </div>
+            <div class="update-info" id="updateInfo" style="margin-top: 15px; font-size: 0.9rem; color: #666;">
+                <!-- 更新信息将在这里显示 -->
+            </div>
+        </div>
+
+        <div class="stats" id="stats">
+            <!-- 统计信息将在这里动态生成 -->
+        </div>
+
+        <div id="loading" class="loading" style="display: none;">
+            正在加载数据...
+        </div>
+
+        <div id="error" class="error" style="display: none;">
+            <!-- 错误信息将在这里显示 -->
+        </div>
+
+        <div class="airdrops-grid" id="airdropsGrid">
+            <!-- 空投卡片将在这里动态生成 -->
+        </div>
+    </div>
+
+    <script>
+        let allAirdrops = [];
+        let autoRefreshInterval = null;
+        let lastUpdateTime = null;
+        // let notificationPermission = false; // 删除通知权限变量
+
+        function formatAddress(addr) {
+            if (!addr) return '未知';
+            return addr.length > 12 ? `${addr.slice(0, 6)}...${addr.slice(-4)}` : addr;
+        }
+        async function copyText(text) {
+            try {
+                if (!text) return false;
+                if (navigator.clipboard && window.isSecureContext) {
+                    await navigator.clipboard.writeText(text);
+                    return true;
+                }
+            } catch (e) {
+                // 忽略，尝试回退
+            }
+            // 回退方案：使用隐藏的textarea
+            try {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                textarea.style.position = 'fixed';
+                textarea.style.top = '-9999px';
+                textarea.style.left = '-9999px';
+                textarea.setAttribute('readonly', '');
+                document.body.appendChild(textarea);
+                textarea.focus();
+                textarea.select();
+                const ok = document.execCommand('copy');
+                document.body.removeChild(textarea);
+                return !!ok;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        // 根据链ID生成 CoinMarketCap Dex 跳转URL
+        const CHAIN_NAME_TO_ID = {
+            ETH: 1,
+            BSC: 56,
+            POLYGON: 137,
+            OP: 10,
+            ARBITRUM: 42161,
+            AVAX: 43114,
+            BASE: 8453,
+            CELO: 42220,
+            FTM: 250,
+            KLAY: 8217,
+            CRO: 25,
+            XDAI: 100
+        };
+        const ID_TO_SLUG = Object.entries(CHAIN_NAME_TO_ID).reduce((acc, [name, id]) => {
+            acc[String(id)] = name.toLowerCase();
+            return acc;
+        }, {});
+        function getCmcDexUrl(chainId, address) {
+            if (!chainId || !address) return '';
+            const slug = ID_TO_SLUG[String(chainId)];
+            if (!slug) return '';
+            return `https://dex.coinmarketcap.com/zh/token/${slug}/${address}/`;
+        }
+
+        // 格式化日期
+        function formatDate(dateStr) {
+            if (!dateStr) return '未知';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('zh-CN');
+        }
+
+        // 格式化时间
+        function formatTime(timeStr) {
+            if (!timeStr) return '未知';
+            return timeStr;
+        }
+
+        // 获取状态样式类
+        function getStatusClass(status) {
+            switch (status) {
+                case 'announced': return 'status-announced';
+                case 'ongoing': return 'status-ongoing';
+                case 'completed': return 'status-completed';
+                default: return 'status-announced';
+            }
+        }
+
+        // 获取类型样式类
+        function getTypeClass(type) {
+            switch (type) {
+                case 'claim': return 'type-claim';
+                case 'grab': return 'type-grab';
+                case 'tge': return 'type-tge';
+                default: return 'type-claim';
+            }
+        }
+
+        // 获取状态中文名称
+        function getStatusText(status) {
+            switch (status) {
+                case 'announced': return '待发布';
+                case 'ongoing': return '进行中';
+                case 'completed': return '已结束';
+                default: return status;
+            }
+        }
+
+        // 获取类型中文名称
+        function getTypeText(type) {
+            switch (type) {
+                case 'claim': return '申领';
+                case 'grab': return '抢购';
+                case 'tge': return '代币生成事件';
+                default: return type;
+            }
+        }
+
+        // 检查空投是否已过期
+        function isExpired(airdrop) {
+            if (!airdrop.date) return false;
+            
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            const airdropDate = new Date(airdrop.date);
+            airdropDate.setHours(0, 0, 0, 0);
+            
+            if (airdropDate < today) return true;
+            
+            if (airdropDate.getTime() === today.getTime() && airdrop.time) {
+                const [hours, minutes] = airdrop.time.split(':').map(Number);
+                const airdropDateTime = new Date(airdrop.date);
+                airdropDateTime.setHours(hours || 0, minutes || 0, 0, 0);
+                
+                return airdropDateTime <= new Date();
+            }
+            
+            return false;
+        }
+
+        // 更新统计信息
+        function updateStats(airdrops) {
+            const stats = {
+                total: airdrops.length,
+                announced: airdrops.filter(a => a.status === 'announced').length,
+                ongoing: airdrops.filter(a => a.status === 'ongoing').length,
+                completed: airdrops.filter(a => a.status === 'completed').length
+            };
+
+            document.getElementById('stats').innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-number">${stats.total}</div>
+                    <div class="stat-label">总空投数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${stats.announced}</div>
+                    <div class="stat-label">待发布</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${stats.ongoing}</div>
+                    <div class="stat-label">进行中</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${stats.completed}</div>
+                    <div class="stat-label">已结束</div>
+                </div>
+            `;
+        }
+
+        // 渲染空投卡片
+        function renderAirdrops(airdrops) {
+            const grid = document.getElementById('airdropsGrid');
+            grid.innerHTML = '';
+
+            airdrops.forEach(airdrop => {
+                const card = document.createElement('div');
+                card.className = 'airdrop-card';
+                
+                if (isExpired(airdrop)) {
+                    card.style.opacity = '0.7';
+                }
+                const contractValue = airdrop.contract_address ? formatAddress(airdrop.contract_address) : '合约地址为空';
+                const cmcUrl = getCmcDexUrl(airdrop.chain_id, airdrop.contract_address);
+                const contractDisplayValue = airdrop.contract_address
+                    ? (cmcUrl ? `<a href="${cmcUrl}" target="_blank" rel="noopener" style="color:#3f51b5; text-decoration:underline;">${contractValue}</a>` : contractValue)
+                    : contractValue;
+                const contractCopyBtn = airdrop.contract_address
+                    ? `<button class="copy-btn" onclick="(async (btn)=>{const ok=await copyText('${airdrop.contract_address}'); btn.textContent= ok ? '已复制' : '复制失败'; setTimeout(()=>{ btn.textContent='复制'; }, 1000);})(this)">复制</button>`
+                    : `<button class="copy-btn" disabled title="无可复制的地址">复制</button>`;
+                const contractDisplay = `
+                    <div class="detail-item" style="grid-column: 1 / -1;">
+                        <div class="detail-label">合约地址</div>
+                        <div class="detail-value">
+                            ${contractDisplayValue}
+                            ${contractCopyBtn}
+                        </div>
+                    </div>
+                `;
+                
+                card.innerHTML = `
+                    <div class="card-header">
+                        <div class="token-info">
+                            <div class="token-symbol">${airdrop.token}</div>
+                            <div class="token-name">${airdrop.name}</div>
+                        </div>
+                        <div class="status-badge ${getStatusClass(airdrop.status)}">
+                            ${getStatusText(airdrop.status)}
+                        </div>
+                    </div>
+                    <div class="card-details">
+                        <div class="detail-item">
+                            <div class="detail-label">日期</div>
+                            <div class="detail-value">${formatDate(airdrop.date)}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">时间</div>
+                            <div class="detail-value">${formatTime(airdrop.time)}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">积分</div>
+                            <div class="detail-value">${airdrop.points || '未知'}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">数量</div>
+                            <div class="detail-value">${airdrop.amount || '未知'}</div>
+                        </div>
+                        ${contractDisplay}
+                    </div>
+                    <div class="card-footer">
+                        <div class="type-badge ${getTypeClass(airdrop.type)}">
+                            ${getTypeText(airdrop.type)}
+                        </div>
+                        <div class="phase-badge">
+                            阶段 ${airdrop.phase}
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // 过滤数据
+        function filterData() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
+            const typeFilter = document.getElementById('typeFilter').value;
+
+            const filtered = allAirdrops.filter(airdrop => {
+                const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+                const nameHit = (airdrop.name || '').toLowerCase().includes(searchTerm);
+                const tokenHit = (airdrop.token || '').toLowerCase().includes(searchTerm);
+                const addressHit = (airdrop.contract_address || '').toLowerCase().includes(searchTerm);
+                const matchesSearch = !searchTerm || nameHit || tokenHit || addressHit;
+                
+                const matchesStatus = !statusFilter || airdrop.status === statusFilter;
+                const matchesType = !typeFilter || airdrop.type === typeFilter;
+
+                return matchesSearch && matchesStatus && matchesType;
+            });
+
+            updateStats(filtered);
+            renderAirdrops(filtered);
+        }
+
+        // 获取数据
+        async function fetchData() {
+            const loading = document.getElementById('loading');
+            const error = document.getElementById('error');
+            const grid = document.getElementById('airdropsGrid');
+            const updateInfo = document.getElementById('updateInfo');
+
+            loading.style.display = 'block';
+            error.style.display = 'none';
+            grid.innerHTML = '';
+            updateInfo.innerHTML = '';
+
+            try {
+                const response = await fetch('/fetch-data');
+                const data = await response.json();
+
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                // 只保留数据赋值和渲染，不做通知
+                allAirdrops = data.airdrops || [];
+                filterData();
+                
+                // 更新最后更新时间
+                lastUpdateTime = new Date();
+                updateInfo.innerHTML = `
+                    <span style="color: #4caf50;">✓</span> 
+                    最后更新: ${lastUpdateTime.toLocaleDateString()} ${lastUpdateTime.toLocaleTimeString()}
+                    <span style="margin-left: 10px; font-size: 0.8rem; color: #999;">
+                        (每10分钟自动更新)
+                    </span>
+                `;
+                
+                error.style.display = 'none';
+                
+            } catch (err) {
+                error.style.display = 'block';
+                error.innerHTML = `
+                    <div style="color: #d32f2f; margin-bottom: 10px;">
+                        ❌ 获取数据失败
+                    </div>
+                    <div style="font-size: 0.9rem; color: #666; margin-bottom: 10px;">
+                        ${err.message}
+                    </div>
+                    <div style="font-size: 0.8rem; color: #999;">
+                        可能的原因：<br>
+                        • 目标网站暂时无法访问<br>
+                        • 网络连接问题<br>
+                        • 目标网站有反爬虫机制<br>
+                        • 接口地址可能已更改
+                    </div>
+                    <div style="margin-top: 15px; font-size: 0.8rem; color: #999;">
+                        系统使用 axios 直接请求接口
+                    </div>
+                `;
+                console.error('获取数据失败:', err);
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        // 启动自动刷新
+        function startAutoRefresh() {
+            // 清除现有的定时器
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+            }
+            
+            // 设置新的定时器，每10分钟刷新一次
+            autoRefreshInterval = setInterval(() => {
+                console.log('执行自动刷新...');
+                fetchData();
+            }, 10 * 60 * 1000); // 10分钟
+            
+            console.log('自动刷新已启动，每10分钟更新一次');
+        }
+
+        // 停止自动刷新
+        function stopAutoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+                console.log('自动刷新已停止');
+            }
+        }
+
+        // 绑定事件监听器
+        document.getElementById('searchInput').addEventListener('input', filterData);
+        document.getElementById('statusFilter').addEventListener('change', filterData);
+        document.getElementById('typeFilter').addEventListener('change', filterData);
+
+        // 页面加载时不再请求通知权限
+        document.addEventListener('DOMContentLoaded', async () => {
+            fetchData();
+            startAutoRefresh();
+        });
+
+        // 页面卸载时停止自动刷新
+        window.addEventListener('beforeunload', stopAutoRefresh);
+    </script>
+</body>
+</html> 

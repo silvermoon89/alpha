@@ -1,0 +1,17 @@
+{
+  "name": "alpha-node",
+  "version": "1.0.0",
+  "main": "alpha.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node alpha.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "express": "^5.1.0",
+    "axios": "^1.10.0"
+  }
+}
