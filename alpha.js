@@ -16,5 +16,3 @@ app.listen(PORT, () => {
   logger.info(`服务器运行在 http://localhost:${PORT}`)
   startPolling()
 })
-
-

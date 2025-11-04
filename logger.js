@@ -15,5 +15,3 @@ module.exports = {
   warn: (...args) => logWith('WARN', args),
   error: (...args) => logWith('ERROR', args)
 }
-
-

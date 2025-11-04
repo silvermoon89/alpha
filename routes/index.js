@@ -36,5 +36,3 @@ router.get(['/alpha', '/'], (req, res) => {
 })
 
 module.exports = router
-
-

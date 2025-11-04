@@ -1,5 +1,12 @@
 const axios = require('axios')
-const { API_URL, REQUEST_TIMEOUT_MS, RETRY_COUNT, RETRY_DELAY_MS, POLL_INTERVAL_MS, CACHE_TTL_MS } = require('../config')
+const {
+  API_URL,
+  REQUEST_TIMEOUT_MS,
+  RETRY_COUNT,
+  RETRY_DELAY_MS,
+  POLL_INTERVAL_MS,
+  CACHE_TTL_MS
+} = require('../config')
 const logger = require('../logger')
 
 let cachedData = null
@@ -67,12 +74,13 @@ function processAirdropStatus(airdrops) {
 async function fetchDataOnce() {
   const response = await axios.get(API_URL, {
     headers: {
-      'accept': 'application/json, text/plain, */*',
+      accept: 'application/json, text/plain, */*',
       'accept-language': 'zh-CN,zh;q=0.9,en;q=0.8',
       'cache-control': 'no-cache',
-      'pragma': 'no-cache',
-      'referer': 'https://alpha123.uk/',
-      'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      pragma: 'no-cache',
+      referer: 'https://alpha123.uk/',
+      'user-agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
     },
     timeout: REQUEST_TIMEOUT_MS
   })
@@ -134,7 +142,7 @@ async function updateData() {
 }
 
 function getData() {
-  if (cachedData && lastFetchTime && (Date.now() - lastFetchTime.getTime()) < CACHE_TTL_MS) {
+  if (cachedData && lastFetchTime && Date.now() - lastFetchTime.getTime() < CACHE_TTL_MS) {
     return { data: cachedData, fromCache: true }
   }
   return { data: null, fromCache: false }
@@ -159,5 +167,3 @@ module.exports = {
   getData,
   getLastUpdate
 }
-
-
