@@ -53,7 +53,32 @@
 }
 ```
 
-## 安装和运行
+## 部署到 Cloudflare Pages（推荐）
+
+无需 Node 服务器，使用 Pages Functions 提供接口：
+
+1) 推送到仓库后，在 Cloudflare Pages 创建项目，构建设置：
+- Framework preset: None
+- Build command: （留空）
+- Build output directory: public
+
+2) 开启 Functions：仓库根目录下的 `functions/[[path]].js` 已就绪，自动生效。
+
+3) 在 Pages 项目“环境变量”中可选设置：
+- `API_URL`：数据源地址（默认 `https://alpha123.uk/api/data?t=1751632712002&fresh=1`）
+- `REQUEST_TIMEOUT_MS`：请求超时（默认 30000）
+- `RETRY_COUNT`：重试次数（默认 3）
+- `RETRY_DELAY_MS`：重试间隔（默认 1500）
+- `CACHE_TTL_MS`：缓存 TTL（默认 300000，5 分钟）
+
+4) 部署完成后：
+- 访问 `/fetch-data` 获取数据
+- 访问 `/last-update` 查看缓存状态
+- 其他路径交由 Pages 静态资源（`public/`）处理
+
+本地开发可用 `wrangler pages dev`，或直接 `npm run dev` 仅预览前端。
+
+## 本地安装和运行（Node 版本）
 
 ```bash
 npm install
